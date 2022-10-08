@@ -1,17 +1,34 @@
-# DO NOT RENAME THIS FILE
-# This file enables automated judging
-# This file should stay named as `submission.py`
-
-# Import Python Libraries
 import numpy as np
 from glob import glob
 from PIL import Image
 from itertools import permutations
 from keras.models import load_model
 from tensorflow.keras.utils import load_img, img_to_array
+import os
 
-# Import helper functions from utils.py
-import utils
+os.getcwd()
+# os.chdir("datathon_test_repository/src/src")
+
+def get_pieces(img, rows, cols, row_cut_size, col_cut_size):
+    pieces = []
+    for r in range(0, rows, row_cut_size):
+        for c in range(0, cols, col_cut_size):
+            pieces.append(img[r:r+row_cut_size, c:c+col_cut_size, :])
+    return pieces
+
+# Splits an image into uniformly sized puzzle pieces
+def get_uniform_rectangular_split(img, puzzle_dim_x, puzzle_dim_y):
+    rows = img.shape[0]
+    cols = img.shape[1]
+    if rows % puzzle_dim_y != 0 or cols % puzzle_dim_x != 0:
+        print('Please ensure image dimensions are divisible by desired puzzle dimensions.')
+    row_cut_size = rows // puzzle_dim_y
+    col_cut_size = cols // puzzle_dim_x
+
+    pieces = get_pieces(img, rows, cols, row_cut_size, col_cut_size)
+
+    return pieces
+
 
 class Predictor:
     """
@@ -77,7 +94,24 @@ if __name__ == '__main__':
         print(prediction)
 
         # Visualize the image
-        pieces = utils.get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
+        pieces = get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
         # Example images are all shuffled in the "3120" order
         final_image = Image.fromarray(np.vstack((np.hstack((pieces[3],pieces[1])),np.hstack((pieces[2],pieces[0])))))
         final_image.show()
+
+for img_name in glob('example_images/*'):
+        # Open an example image using the PIL library
+        example_image = Image.open(img_name)
+
+        # Use instance of the Predictor class to predict the correct order of the current example image
+        predictor = Predictor()
+        prediction = predictor.make_prediction(img_name)
+        # Example images are all shuffled in the "3120" order
+        print(prediction)
+
+        # Visualize the image
+        pieces = get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
+        # Example images are all shuffled in the "3120" order
+        final_image = Image.fromarray(np.vstack((np.hstack((pieces[3],pieces[1])),np.hstack((pieces[2],pieces[0])))))
+        final_image.show()
+
