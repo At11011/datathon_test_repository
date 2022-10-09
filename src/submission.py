@@ -57,14 +57,14 @@ class Predictor:
             predictions[i] = single_prediction[0][1]
         
         idx = np.argmax(predictions)
-        print(idx)
-        return utils.perms[idx]
+        return f'{utils.perms[idx][0]:d}' + f'{utils.perms[idx][1]:d}' + f'{utils.perms[idx][2]:d}' + f'{utils.perms[idx][3]:d}' # f{""}
 
 # Run this file using `python3 submission.py`
 if __name__ == '__main__':
 
     direc = "example_images/*"
-    direc = "../assets/train/1032/*"
+    direc = "../assets/testing/*"
+    # direc = "../assets/train/1032/*"
     count = 0
     for img_name in glob(direc):
         
@@ -79,15 +79,14 @@ if __name__ == '__main__':
 
         # Visualize the image
         pieces = utils.get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
-
-        a = prediction[0]
-        b = prediction[1]
-        c = prediction[2]
-        d = prediction[3]
+        
+        a = int(prediction[0])
+        b = int(prediction[1])
+        c = int(prediction[2])
+        d = int(prediction[3])
         final_image = Image.fromarray(np.vstack((np.hstack((pieces[a],pieces[b])),np.hstack((pieces[c],pieces[d])))))
         final_image.show()
         
-
         count += 1
 
         if count >= 10:
