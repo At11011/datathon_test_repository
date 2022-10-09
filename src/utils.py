@@ -1,21 +1,19 @@
 import numpy as np
 
-def get_pieces(img, rows, cols, row_cut_size, col_cut_size):
-    pieces = []
-    for r in range(0, rows, row_cut_size):
-        for c in range(0, cols, col_cut_size):
-            pieces.append(img[r:r+row_cut_size, c:c+col_cut_size, :])
-    return pieces
+# A function to convert an image into a permutation
+def image_perm(image, perm):
+  q0 = image[0:int(image_height/2), 0:int(image_width/2)]
+  q1 = image[0:int(image_height/2), int(image_width/2):image_width]
+  q2 = image[int(image_height/2):image_height, 0:int(image_width/2)]
+  q3 = image[int(image_height/2):image_height, int(image_width/2):image_width]
 
-# Splits an image into uniformly sized puzzle pieces
-def get_uniform_rectangular_split(img, puzzle_dim_x, puzzle_dim_y):
-    rows = img.shape[0]
-    cols = img.shape[1]
-    if rows % puzzle_dim_y != 0 or cols % puzzle_dim_x != 0:
-        print('Please ensure image dimensions are divisible by desired puzzle dimensions.')
-    row_cut_size = rows // puzzle_dim_y
-    col_cut_size = cols // puzzle_dim_x
+  pre_perm = [q0, q1, q2, q3]
 
-    pieces = get_pieces(img, rows, cols, row_cut_size, col_cut_size)
+  q0 = pre_perm[perm[0]]
+  q1 = pre_perm[perm[1]]
+  q2 = pre_perm[perm[2]]
+  q3 = pre_perm[perm[3]]
 
-    return pieces
+
+  res = np.concatenate((np.concatenate((q0, q1), 1), np.concatenate((q2, q3), 1)), 0)
+  return res
