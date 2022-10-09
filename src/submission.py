@@ -24,7 +24,7 @@ class Predictor:
         """
         Initializes any variables to be used when making predictions
         """
-        self.model = load_model('example_model.h5')
+        self.model = load_model('unscramble_model.h5')
 
     def make_prediction(self, img_path):
         """
@@ -66,7 +66,10 @@ class Predictor:
 # Run this file using `python3 submission.py`
 if __name__ == '__main__':
 
-    for img_name in glob('example_images/*'):
+    count = 0
+    direc = '../assets/testing/*'
+    # direc = 'example_images/*'
+    for img_name in glob(direc):
         # Open an example image using the PIL library
         example_image = Image.open(img_name)
 
@@ -76,8 +79,19 @@ if __name__ == '__main__':
         # Example images are all shuffled in the "3120" order
         print(prediction)
 
+        a = int(prediction[0])
+        b = int(prediction[1])
+        c = int(prediction[2])
+        d = int(prediction[3])
+
+        print(a, b, c, d)
+
         # Visualize the image
         pieces = utils.get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
         # Example images are all shuffled in the "3120" order
-        final_image = Image.fromarray(np.vstack((np.hstack((pieces[3],pieces[1])),np.hstack((pieces[2],pieces[0])))))
+        final_image = Image.fromarray(np.vstack((np.hstack((pieces[a],pieces[b])),np.hstack((pieces[c],pieces[d])))))
         final_image.show()
+
+        count += 1
+        if count >= 5:
+            break
