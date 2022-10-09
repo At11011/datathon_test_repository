@@ -1,11 +1,16 @@
+# DO NOT RENAME THIS FILE
+# This file enables automated judging
+# This file should stay named as `submission.py`
+
+# Import Python Libraries
 import numpy as np
 from glob import glob
-from PIL import Image, ImageOps
+from PIL import Image
 from itertools import permutations
 from keras.models import load_model
-import tensorflow as tf
-import os
+from tensorflow.keras.utils import load_img, img_to_array
 
+# Import helper functions from utils.py
 import utils
 
 class Predictor:
@@ -19,8 +24,7 @@ class Predictor:
         """
         Initializes any variables to be used when making predictions
         """
-        self.model = load_model('unscramble_model.h5')
-        self.probability_model = tf.keras.Sequential([self.model, tf.keras.layers.Softmax()])
+        self.model = load_model('example_model.h5')
 
     def make_prediction(self, img_path):
         """
@@ -39,55 +43,41 @@ class Predictor:
         """
 
         # Load the image
-        # Grayscale the image. Our model determines whether a grayscale image is correctly arranged or not
-        img = ImageOps.grayscale(Image.open(f'{img_path}'))
+        img = load_img(f'{img_path}', target_size=(128, 128))
 
         # Converts the image to a 3D numpy array (128x128x3)
-        img_array = np.asarray(img, dtype=np.uint8)/255 # Normalize
+        img_array = img_to_array(img)
 
-        predictions = np.zeros(24)
-        
-        # Generate all permutations
-        for i in range(24):
-            img = utils.image_perm(img_array, i)
-            img = (np.expand_dims(img,0))
-            # print(img.shape)
-            single_prediction = self.probability_model.predict(img, verbose='false')
-            # print(single_prediction)
-            predictions[i] = single_prediction[0][1]
-        
-        idx = np.argmax(predictions)
-        return f'{utils.perms[idx][0]:d}' + f'{utils.perms[idx][1]:d}' + f'{utils.perms[idx][2]:d}' + f'{utils.perms[idx][3]:d}' # f{""}
+        # Convert from (128x128x3) to (Nonex128x128x3), for tensorflow
+        img_tensor = np.expand_dims(img_array, axis=0)
 
+        # Preform a prediction on this image using a pre-trained model (you should make your own model :))
+        prediction = self.model.predict(img_tensor, verbose=False)
+
+        # The example model was trained to return the percent chance that the input image is scrambled using 
+        # each one of the 24 possible permutations for a 2x2 puzzle
+        combs = [''.join(str(x) for x in comb) for comb in list(permutations(range(0, 4)))]
+
+        # Return the combination that the example model thinks is the solution to this puzzle
+        # Example return value: `3120`
+        return combs[np.argmax(prediction)]
+
+# Example main function for testing/development
 # Run this file using `python3 submission.py`
 if __name__ == '__main__':
 
-    direc = "example_images/*"
-    direc = "../assets/testing/*"
-    # direc = "../assets/train/1032/*"
-    count = 0
-    for img_name in glob(direc):
-        
+    for img_name in glob('example_images/*'):
         # Open an example image using the PIL library
         example_image = Image.open(img_name)
 
-        # Use instance of the Predictor class+--- to predict the correct order of the current example image
+        # Use instance of the Predictor class to predict the correct order of the current example image
         predictor = Predictor()
         prediction = predictor.make_prediction(img_name)
-
+        # Example images are all shuffled in the "3120" order
         print(prediction)
 
         # Visualize the image
         pieces = utils.get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
-        
-        a = int(prediction[0])
-        b = int(prediction[1])
-        c = int(prediction[2])
-        d = int(prediction[3])
-        final_image = Image.fromarray(np.vstack((np.hstack((pieces[a],pieces[b])),np.hstack((pieces[c],pieces[d])))))
+        # Example images are all shuffled in the "3120" order
+        final_image = Image.fromarray(np.vstack((np.hstack((pieces[3],pieces[1])),np.hstack((pieces[2],pieces[0])))))
         final_image.show()
-        
-        count += 1
-
-        if count >= 10:
-            break
