@@ -115,3 +115,39 @@ for img_name in glob('example_images/*'):
         final_image = Image.fromarray(np.vstack((np.hstack((pieces[3],pieces[1])),np.hstack((pieces[2],pieces[0])))))
         final_image.show()
 
+import numpy as np
+a = np.array([[3,2,1,0],[3,2,0,1],
+              [3,1,2,0],[3,1,0,2],
+              [3,0,1,2],[3,0,2,1],
+              [2,3,1,0],[2,3,0,1],
+              [2,1,3,0],[2,1,0,3],
+              [2,0,1,3],[2,0,3,1],
+              [1,2,3,0],[1,2,0,3],
+              [1,3,2,0],[1,3,0,2],
+              [1,0,3,2],[1,0,2,3],
+              [0,2,1,3],[0,2,3,1],
+              [0,1,2,3],[0,1,3,2],
+              [0,3,1,2],[0,3,2,1]])
+b = np.transpose(a)
+print(b)
+print(a)
+
+
+# A function to convert an image into a permutation
+def image_perm(image, perm):
+  q0 = image[0:int(image_height/2), 0:int(image_width/2)]
+  q1 = image[0:int(image_height/2), int(image_width/2):image_width]
+  q2 = image[int(image_height/2):image_height, 0:int(image_width/2)]
+  q3 = image[int(image_height/2):image_height, int(image_width/2):image_width]
+
+  pre_perm = [q0, q1, q2, q3]
+
+  q0 = pre_perm[perm[0]]
+  q1 = pre_perm[perm[1]]
+  q2 = pre_perm[perm[2]]
+  q3 = pre_perm[perm[3]]
+
+
+  res = np.concatenate((np.concatenate((q0, q1), 1), np.concatenate((q2, q3), 1)), 0)
+  print(res.shape)
+  return res
