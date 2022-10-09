@@ -54,13 +54,12 @@ class Predictor:
             # print(img.shape)
             single_prediction = self.probability_model.predict(img, verbose='false')
             # print(single_prediction)
-            predictions[i] = np.max(single_prediction)
-
+            predictions[i] = single_prediction[0][1]
+        
         idx = np.argmax(predictions)
         print(idx)
         return utils.perms[idx]
 
-# Example main function for testing/development
 # Run this file using `python3 submission.py`
 if __name__ == '__main__':
 
@@ -75,12 +74,12 @@ if __name__ == '__main__':
         # Use instance of the Predictor class+--- to predict the correct order of the current example image
         predictor = Predictor()
         prediction = predictor.make_prediction(img_name)
-        # Example images are all shuffled in the "3120" order
+
         print(prediction)
 
         # Visualize the image
         pieces = utils.get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
-        # Example images are all shuffled in the "3120" order
+
         a = prediction[0]
         b = prediction[1]
         c = prediction[2]
@@ -91,5 +90,5 @@ if __name__ == '__main__':
 
         count += 1
 
-        if count >= 3:
+        if count >= 10:
             break
