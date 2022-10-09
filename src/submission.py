@@ -1,34 +1,12 @@
 import numpy as np
 from glob import glob
-from PIL import Image
+from PIL import Image, ImageOps
 from itertools import permutations
 from keras.models import load_model
-from tensorflow.keras.utils import load_img, img_to_array
+import tensorflow as tf
 import os
 
-os.getcwd()
-# os.chdir("datathon_test_repository/src/src")
-
-def get_pieces(img, rows, cols, row_cut_size, col_cut_size):
-    pieces = []
-    for r in range(0, rows, row_cut_size):
-        for c in range(0, cols, col_cut_size):
-            pieces.append(img[r:r+row_cut_size, c:c+col_cut_size, :])
-    return pieces
-
-# Splits an image into uniformly sized puzzle pieces
-def get_uniform_rectangular_split(img, puzzle_dim_x, puzzle_dim_y):
-    rows = img.shape[0]
-    cols = img.shape[1]
-    if rows % puzzle_dim_y != 0 or cols % puzzle_dim_x != 0:
-        print('Please ensure image dimensions are divisible by desired puzzle dimensions.')
-    row_cut_size = rows // puzzle_dim_y
-    col_cut_size = cols // puzzle_dim_x
-
-    pieces = get_pieces(img, rows, cols, row_cut_size, col_cut_size)
-
-    return pieces
-
+import utils
 
 class Predictor:
     """
@@ -41,7 +19,8 @@ class Predictor:
         """
         Initializes any variables to be used when making predictions
         """
-        self.model = load_model('example_model.h5')
+        self.model = load_model('unscramble_model.h5')
+        self.probability_model = tf.keras.Sequential([self.model, tf.keras.layers.Softmax()])
 
     def make_prediction(self, img_path):
         """
@@ -60,24 +39,23 @@ class Predictor:
         """
 
         # Load the image
-        img = load_img(f'{img_path}', target_size=(128, 128))
+        # Grayscale the image. Our model determines whether a grayscale image is correctly arranged or not
+        img = ImageOps.grayscale(Image.open(f'{img_path}'))
 
         # Converts the image to a 3D numpy array (128x128x3)
-        img_array = img_to_array(img)
+        img_array = np.asarray(img, dtype=np.uint8)/255 # Normalize
 
-        # Convert from (128x128x3) to (Nonex128x128x3), for tensorflow
-        img_tensor = np.expand_dims(img_array, axis=0)
+        predictions = np.zeros(24)
 
-        # Preform a prediction on this image using a pre-trained model (you should make your own model :))
-        prediction = self.model.predict(img_tensor, verbose=False)
+        # Generate all permutations
+        for i in range(24):
+            img = utils.image_perm(img_array, i)
+            img = (np.expand_dims(img,0))
+            predictions[i] = np.max(self.probability_model.predict(img))
 
-        # The example model was trained to return the percent chance that the input image is scrambled using 
-        # each one of the 24 possible permutations for a 2x2 puzzle
-        combs = [''.join(str(x) for x in comb) for comb in list(permutations(range(0, 4)))]
-
-        # Return the combination that the example model thinks is the solution to this puzzle
-        # Example return value: `3120`
-        return combs[np.argmax(prediction)]
+        idx = np.argmax(predictions)
+        print(idx)
+        return utils.perms[idx]
 
 # Example main function for testing/development
 # Run this file using `python3 submission.py`
@@ -87,67 +65,14 @@ if __name__ == '__main__':
         # Open an example image using the PIL library
         example_image = Image.open(img_name)
 
-        # Use instance of the Predictor class to predict the correct order of the current example image
+        # Use instance of the Predictor class+--- to predict the correct order of the current example image
         predictor = Predictor()
         prediction = predictor.make_prediction(img_name)
         # Example images are all shuffled in the "3120" order
         print(prediction)
 
         # Visualize the image
-        pieces = get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
+        pieces = utils.get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
         # Example images are all shuffled in the "3120" order
         final_image = Image.fromarray(np.vstack((np.hstack((pieces[3],pieces[1])),np.hstack((pieces[2],pieces[0])))))
         final_image.show()
-
-for img_name in glob('example_images/*'):
-        # Open an example image using the PIL library
-        example_image = Image.open(img_name)
-
-        # Use instance of the Predictor class to predict the correct order of the current example image
-        predictor = Predictor()
-        prediction = predictor.make_prediction(img_name)
-        # Example images are all shuffled in the "3120" order
-        print(prediction)
-
-        # Visualize the image
-        pieces = get_uniform_rectangular_split(np.asarray(example_image), 2, 2)
-        # Example images are all shuffled in the "3120" order
-        final_image = Image.fromarray(np.vstack((np.hstack((pieces[3],pieces[1])),np.hstack((pieces[2],pieces[0])))))
-        final_image.show()
-
-import numpy as np
-a = np.array([[3,2,1,0],[3,2,0,1],
-              [3,1,2,0],[3,1,0,2],
-              [3,0,1,2],[3,0,2,1],
-              [2,3,1,0],[2,3,0,1],
-              [2,1,3,0],[2,1,0,3],
-              [2,0,1,3],[2,0,3,1],
-              [1,2,3,0],[1,2,0,3],
-              [1,3,2,0],[1,3,0,2],
-              [1,0,3,2],[1,0,2,3],
-              [0,2,1,3],[0,2,3,1],
-              [0,1,2,3],[0,1,3,2],
-              [0,3,1,2],[0,3,2,1]])
-b = np.transpose(a)
-print(b)
-print(a)
-
-
-# A function to convert an image into a permutation
-def image_perm(image, perm):
-  q0 = image[0:int(image_height/2), 0:int(image_width/2)]
-  q1 = image[0:int(image_height/2), int(image_width/2):image_width]
-  q2 = image[int(image_height/2):image_height, 0:int(image_width/2)]
-  q3 = image[int(image_height/2):image_height, int(image_width/2):image_width]
-
-  pre_perm = [q0, q1, q2, q3]
-
-  q0 = pre_perm[perm[0]]
-  q1 = pre_perm[perm[1]]
-  q2 = pre_perm[perm[2]]
-  q3 = pre_perm[perm[3]]
-
-
-  res = np.concatenate((np.concatenate((q0, q1), 1), np.concatenate((q2, q3), 1)), 0)
-  print(res.shape)
-  return res
