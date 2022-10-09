@@ -51,12 +51,14 @@ class Predictor:
         # Convert from (128x128x3) to (Nonex128x128x3), for tensorflow
         img_tensor = np.expand_dims(img_array, axis=0)
 
-        # Preform a prediction on this image using a pre-trained model (you should make your own model :))
         prediction = self.model.predict(img_tensor, verbose=False)
+
+        # print(prediction)
 
         # The example model was trained to return the percent chance that the input image is scrambled using 
         # each one of the 24 possible permutations for a 2x2 puzzle
         combs = [''.join(str(x) for x in comb) for comb in list(permutations(range(0, 4)))]
+        print(combs)
 
         # Return the combination that the example model thinks is the solution to this puzzle
         # Example return value: `3120`
@@ -93,5 +95,5 @@ if __name__ == '__main__':
         final_image.show()
 
         count += 1
-        if count >= 5:
+        if count >= 20:
             break
